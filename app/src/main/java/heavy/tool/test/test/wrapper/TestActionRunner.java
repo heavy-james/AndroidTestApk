@@ -2,10 +2,10 @@ package heavy.tool.test.test.wrapper;
 
 import android.content.Context;
 
-import com.ktcp.test.model.data.Action;
-import com.ktcp.test.model.data.action.view.KeyEvent;
-import com.ktcp.test.model.data.action.view.KeyPress;
 
+import heavy.test.plugin.model.data.Action;
+import heavy.test.plugin.model.data.action.view.KeyEvent;
+import heavy.test.plugin.model.data.action.view.KeyPress;
 import heavy.tool.test.test.model.TestResult;
 import heavy.tool.test.test.util.ViewTestUtil;
 

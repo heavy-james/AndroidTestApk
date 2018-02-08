@@ -14,20 +14,22 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Checkable;
 
-import com.ktcp.test.model.data.Action;
-import com.ktcp.test.model.data.Assertion;
-import com.ktcp.test.model.data.Identifier;
-import com.ktcp.test.model.data.action.view.Check;
-import com.ktcp.test.model.data.action.view.Click;
-import com.ktcp.test.model.data.action.view.Focus;
-import com.ktcp.test.model.data.action.view.KeyEvent;
-import com.ktcp.test.model.data.action.view.KeyPress;
-import com.ktcp.test.model.data.assertion.view.Display;
-import com.ktcp.test.model.data.assertion.view.FullScreen;
-import com.ktcp.test.model.data.assertion.view.HasFocus;
-import com.ktcp.test.model.data.assertion.view.WithText;
-import com.ktcp.test.model.data.interf.ITestObject;
-import com.ktcp.test.util.LogUtil;
+import heavy.test.plugin.model.data.Action;
+import heavy.test.plugin.model.data.Assertion;
+import heavy.test.plugin.model.data.Identifier;
+import heavy.test.plugin.model.data.action.view.Check;
+import heavy.test.plugin.model.data.action.view.Click;
+import heavy.test.plugin.model.data.action.view.Focus;
+import heavy.test.plugin.model.data.action.view.KeyEvent;
+import heavy.test.plugin.model.data.action.view.KeyPress;
+import heavy.test.plugin.model.data.assertion.view.Display;
+import heavy.test.plugin.model.data.assertion.view.FullScreen;
+import heavy.test.plugin.model.data.assertion.view.HasFocus;
+import heavy.test.plugin.model.data.assertion.view.WithText;
+import heavy.test.plugin.model.data.interf.ITestObject;
+import heavy.test.plugin.util.LogUtil;
+import heavy.tool.test.test.model.TestResult;
+import heavy.tool.test.util.ResHelper;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -35,8 +37,6 @@ import org.hamcrest.Matcher;
 import java.util.ArrayList;
 import java.util.List;
 
-import heavy.tool.test.test.model.TestResult;
-import heavy.tool.test.util.ResHelper;
 
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.pressKey;

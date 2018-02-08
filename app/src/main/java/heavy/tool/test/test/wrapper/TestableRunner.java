@@ -2,11 +2,11 @@ package heavy.tool.test.test.wrapper;
 
 import android.content.Context;
 
-import com.ktcp.test.model.data.Testable;
-import com.ktcp.test.model.data.testable.data.TestableData;
-import com.ktcp.test.model.data.testable.global.GlobalTestable;
-import com.ktcp.test.model.data.testable.view.TestableView;
 
+import heavy.test.plugin.model.data.Testable;
+import heavy.test.plugin.model.data.testable.data.TestableData;
+import heavy.test.plugin.model.data.testable.global.GlobalTestable;
+import heavy.test.plugin.model.data.testable.view.TestableView;
 import heavy.tool.test.test.model.TestResult;
 
 

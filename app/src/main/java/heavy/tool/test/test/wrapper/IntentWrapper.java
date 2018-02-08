@@ -3,8 +3,9 @@ package heavy.tool.test.test.wrapper;
 import android.content.Intent;
 import android.text.TextUtils;
 
-import com.ktcp.test.model.data.Extra;
-import com.ktcp.test.model.data.IntentData;
+import heavy.test.plugin.model.data.Extra;
+import heavy.test.plugin.model.data.IntentData;
+
 
 /**
  * Created by heavy on 2017/5/20.

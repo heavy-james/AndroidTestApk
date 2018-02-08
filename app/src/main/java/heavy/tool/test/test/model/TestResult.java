@@ -1,13 +1,15 @@
 package heavy.tool.test.test.model;
 
-import com.ktcp.test.util.FileUtil;
-import com.ktcp.test.util.TextUtil;
 
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import heavy.test.plugin.util.FileUtil;
+import heavy.test.plugin.util.TextUtil;
+
 
 /**
  * Created by heavy on 2017/6/1.

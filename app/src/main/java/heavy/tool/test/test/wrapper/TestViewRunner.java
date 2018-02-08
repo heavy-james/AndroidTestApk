@@ -1,27 +1,22 @@
 package heavy.tool.test.test.wrapper;
 
 import android.content.Context;
-import android.support.test.espresso.InjectEventSecurityException;
 import android.support.test.espresso.UiController;
 import android.support.test.espresso.ViewInteraction;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-
-import com.ktcp.test.model.data.Action;
-import com.ktcp.test.model.data.Assertion;
-import com.ktcp.test.model.data.Identifier;
-import com.ktcp.test.model.data.action.global.Delay;
-import com.ktcp.test.model.data.interf.ITestObject;
-import com.ktcp.test.model.data.testable.view.TestableAdapterView;
-import com.ktcp.test.model.data.testable.view.TestableRecyclerView;
-import com.ktcp.test.model.data.testable.view.TestableView;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import heavy.test.plugin.model.data.Action;
+import heavy.test.plugin.model.data.Assertion;
+import heavy.test.plugin.model.data.Identifier;
+import heavy.test.plugin.model.data.action.global.Delay;
+import heavy.test.plugin.model.data.interf.ITestObject;
+import heavy.test.plugin.model.data.testable.view.TestableAdapterView;
+import heavy.test.plugin.model.data.testable.view.TestableRecyclerView;
+import heavy.test.plugin.model.data.testable.view.TestableView;
 import heavy.tool.test.activity.TestEntrance;
 import heavy.tool.test.test.model.TestResult;
 import heavy.tool.test.test.util.DelayUtil;
@@ -31,16 +26,12 @@ import heavy.tool.test.util.ResHelper;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.matcher.RootMatchers.withDecorView;
 import static heavy.tool.test.test.util.ViewTestUtil.createAdapterViewMatcher;
 import static heavy.tool.test.test.util.ViewTestUtil.createRecyclerViewAction;
 import static heavy.tool.test.test.util.ViewTestUtil.createRecyclerViewAssertion;
 import static heavy.tool.test.test.util.ViewTestUtil.createViewAction;
 import static heavy.tool.test.test.util.ViewTestUtil.createViewAssertion;
 import static heavy.tool.test.test.util.ViewTestUtil.createViewMatcher;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.core.Is.is;
 
 
 /**

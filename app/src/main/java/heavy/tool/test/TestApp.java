@@ -3,7 +3,7 @@ package heavy.tool.test;
 import android.app.Application;
 import android.os.StrictMode;
 
-import com.ktcp.test.util.LogUtil;
+import heavy.tool.test.util.LogUtil;
 
 
 /**

@@ -2,12 +2,11 @@ package heavy.tool.test.test.util;
 
 import android.app.Activity;
 
-import com.ktcp.test.model.data.reflection.MethodData;
-import com.ktcp.test.model.data.reflection.ObjectData;
-import com.ktcp.test.model.data.reflection.RuntimeValue;
-import com.ktcp.test.util.LogUtil;
-import com.ktcp.test.util.TextUtil;
-
+import heavy.test.plugin.model.data.reflection.MethodData;
+import heavy.test.plugin.model.data.reflection.ObjectData;
+import heavy.test.plugin.model.data.reflection.RuntimeValue;
+import heavy.test.plugin.util.TextUtil;
+import heavy.tool.test.util.LogUtil;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

@@ -8,20 +8,24 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.elvishew.xlog.LogLevel;
-import com.ktcp.test.logic.TestCommand;
-import com.ktcp.test.logic.TestCommandFactory;
-import com.ktcp.test.logic.command.GetRuntimeValue;
-import com.ktcp.test.logic.command.RecordResult;
-import com.ktcp.test.logic.command.RunTestObject;
-import com.ktcp.test.logic.command.SetUpActivity;
-import com.ktcp.test.logic.command.StopTest;
-import com.ktcp.test.logic.transport.SocketClient;
-import com.ktcp.test.model.data.IntentData;
-import com.ktcp.test.model.data.reflection.MethodData;
-import com.ktcp.test.model.data.reflection.ObjectData;
-import com.ktcp.test.model.data.reflection.RuntimeValue;
-import com.ktcp.test.util.LogUtil;
-import com.ktcp.test.util.TextUtil;
+import heavy.test.plugin.logic.TestCommand;
+import heavy.test.plugin.logic.TestCommandFactory;
+import heavy.test.plugin.logic.command.GetRuntimeValue;
+import heavy.test.plugin.logic.command.RecordResult;
+import heavy.test.plugin.logic.command.RunTestObject;
+import heavy.test.plugin.logic.command.SetUpActivity;
+import heavy.test.plugin.logic.command.StopTest;
+import heavy.test.plugin.logic.transport.SocketClient;
+import heavy.test.plugin.model.data.IntentData;
+import heavy.test.plugin.model.data.reflection.MethodData;
+import heavy.test.plugin.model.data.reflection.ObjectData;
+import heavy.test.plugin.model.data.reflection.RuntimeValue;
+import heavy.test.plugin.util.LogUtil;
+import heavy.test.plugin.util.TextUtil;
+import heavy.tool.test.test.model.TestResult;
+import heavy.tool.test.test.util.ReflectionUtil;
+import heavy.tool.test.test.wrapper.IntentWrapper;
+import heavy.tool.test.test.wrapper.TestObjectRunner;
 
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -33,10 +37,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import heavy.tool.test.test.model.TestResult;
-import heavy.tool.test.test.util.ReflectionUtil;
-import heavy.tool.test.test.wrapper.IntentWrapper;
-import heavy.tool.test.test.wrapper.TestObjectRunner;
 
 
 @RunWith(AndroidJUnit4.class)
