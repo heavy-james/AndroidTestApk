@@ -8,6 +8,17 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.elvishew.xlog.LogLevel;
+
+import org.json.JSONObject;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 import heavy.test.plugin.logic.TestCommand;
 import heavy.test.plugin.logic.TestCommandFactory;
 import heavy.test.plugin.logic.command.GetRuntimeValue;
@@ -26,17 +37,6 @@ import heavy.tool.test.test.model.TestResult;
 import heavy.tool.test.test.util.ReflectionUtil;
 import heavy.tool.test.test.wrapper.IntentWrapper;
 import heavy.tool.test.test.wrapper.TestObjectRunner;
-
-import org.json.JSONObject;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-
 
 
 @RunWith(AndroidJUnit4.class)
@@ -61,7 +61,7 @@ public class TestEntrance extends ActivityTestRule<Activity> {
 
     @BeforeClass
     public static void staticSetUp() throws Throwable {
-        LogUtil.init(LogLevel.ALL, false,"/sdcard/xlog/");
+        LogUtil.init(LogLevel.ALL, true, "/sdcard/xlog/heavy.tool.test/test_result.txt");
         LogUtil.i(TAG, "staticSetUp");
         mContext = InstrumentationRegistry.getTargetContext();
         mTestResult = new TestResult();
@@ -82,22 +82,21 @@ public class TestEntrance extends ActivityTestRule<Activity> {
             public void uncaughtException(Thread t, Throwable throwable) {
                 LogUtil.d(TAG, "runTests occurs unexpected exception, do aborting...");
                 LogUtil.e(TAG, throwable.getMessage());
-                TestCommand responseCommand = new RecordResult().setInfo("execute command failed, cause : " + throwable.getMessage())
+                final TestCommand responseCommand = new RecordResult().setInfo("execute command failed, cause : " + throwable.getMessage())
                         .setFailed(true).setLevel(RecordResult.LEVEL_DETAIL).setRunAsCondition(false);
-                try {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            sendForResult(responseCommand);
+                        } catch (Throwable throwable1) {
+                            throwable1.printStackTrace();
                         }
-                    });
-                    sendForResult(responseCommand);
-                } catch (Throwable throwable1) {
-                    throwable1.printStackTrace();
-                }
-                mSocketClient.close();
+                        mSocketClient.close();
+                        System.exit(-1);
+                    }
+                });
                 throwable.printStackTrace();
-                //System.exit(-1);
             }
         });
 
