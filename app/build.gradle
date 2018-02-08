@@ -60,7 +60,7 @@ dependencies {
         exclude module: 'recyclerview-v7'
     }
 
-    implementation 'com.ktcp.test:gradle-android-ui:1.0.0'
+    implementation 'heavy.tool.test:gradle-android-ui:1.0.0'
 
 
 }
