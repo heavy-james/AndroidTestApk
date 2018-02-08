@@ -1,0 +1,94 @@
+import java.text.SimpleDateFormat
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion '25.0.1'
+
+    defaultConfig {
+        applicationId "heavy.tool.test"
+        minSdkVersion 15
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testApplicationId "com.topband.runner"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        topband_system {
+            keyAlias rootProject.keyStoreAlias
+            keyPassword rootProject.keyStoreKeyPassword
+            storeFile file(rootProject.keyStorePath)
+            storePassword rootProject.keyStorePassword
+        }
+    }
+
+    buildTypes {
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.topband_system
+        }
+        debug {
+            signingConfig signingConfigs.topband_system
+        }
+    }
+}
+
+def releaseTime() {
+    return new SimpleDateFormat("yyyyMMdd-HH:mm").format(new Date());
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    //xlog
+    implementation 'com.elvishew:xlog:1.1.0'
+
+    //recycler view
+    compile 'com.android.support:recyclerview-v7:25.3.1'
+
+    testCompile 'junit:junit:4.12'
+
+    implementation 'org.mockito:mockito-core:1.10.19'
+    implementation 'com.android.support:support-annotations:25.2.0'
+    implementation 'com.android.support.test:runner:0.5'
+    implementation 'com.android.support.test:rules:0.5'
+    // Optional -- Hamcrest library
+    implementation 'org.hamcrest:hamcrest-library:1.3'
+    // Optional -- UI testing with Espresso
+    implementation 'com.android.support.test.espresso:espresso-core:2.2.2'
+    // Optional -- UI testing with UI Automator
+    implementation('com.android.support.test.espresso:espresso-contrib:2.0') {
+        exclude group: 'com.android.support', module: 'support-annotations'
+        exclude module: 'support-annotations'
+        exclude module: 'support-v4'
+        exclude module: 'support-v13'
+        exclude module: 'recyclerview-v7'
+    }
+    implementation 'com.ktcp.test:gradle-android-ui:1.0.0'
+
+
+}
+
+task updateManifest << {
+
+    def manifestFile = project.rootProject.rootDir.path + "/app/src/main/AndroidManifest.xml"
+
+    def manifestFile1 = project.rootProject.rootDir.path + "/app/src/main/AndroidManifest1.xml"
+
+
+    println (manifestFile)
+
+    def manifest = new XmlParser().parse(manifestFile)
+
+    manifest.instrumentation[0].attributes().remove("android:targetPackage")
+
+    manifest.instrumentation[0].attributes().put("android:targetPackage", "com.topband.runner")
+
+    new XmlNodePrinter(new PrintWriter(new FileWriter(manifestFile1))).print(manifest)
+
+}
