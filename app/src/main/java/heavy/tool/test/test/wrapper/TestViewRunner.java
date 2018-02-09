@@ -2,12 +2,12 @@ package heavy.tool.test.test.wrapper;
 
 import android.content.Context;
 import android.support.test.espresso.UiController;
+import android.support.test.espresso.ViewAction;
+import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.ViewInteraction;
 import android.view.View;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 
 import heavy.test.plugin.model.data.Action;
 import heavy.test.plugin.model.data.Assertion;
@@ -21,8 +21,6 @@ import heavy.tool.test.activity.TestEntrance;
 import heavy.tool.test.test.model.TestResult;
 import heavy.tool.test.test.util.DelayUtil;
 import heavy.tool.test.test.util.ViewTestUtil;
-import heavy.tool.test.util.LogUtil;
-import heavy.tool.test.util.ResHelper;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
@@ -32,6 +30,8 @@ import static heavy.tool.test.test.util.ViewTestUtil.createRecyclerViewAssertion
 import static heavy.tool.test.test.util.ViewTestUtil.createViewAction;
 import static heavy.tool.test.test.util.ViewTestUtil.createViewAssertion;
 import static heavy.tool.test.test.util.ViewTestUtil.createViewMatcher;
+import static heavy.tool.test.test.util.ViewTestUtil.getViewFromDevice;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 /**
@@ -85,130 +85,62 @@ public class TestViewRunner implements ITestObjectRunner {
         if (sendDelayAction(atom, testResult) || ViewTestUtil.sendActivityKeyEvent(atom, testResult)) {
             return true;
         }
+
+        final View targetView = getViewFromDevice(createViewMatcher(context, identifier));
+
+        checkNotNull(targetView, "find no view with identifier : "  + identifier.getJsonObject().toString());
+
         if (atom instanceof Action) {
 
-            ViewInteraction viewInteraction = null;
+            if (uiController == null) {
 
-//            if(!identifier.getId().equals("btn_close")){
-//                viewInteraction = onView(createViewMatcher(context, identifier));
-//            }
+                Class<?> classViewInteraction = Class.forName("android.support.test.espresso.ViewInteraction");
 
-            if(viewInteraction == null){
-                LogUtil.d(TAG, "view is not int activity, search it in root.");
+                checkNotNull(classViewInteraction, "can not reflect android.support.test.espresso.ViewInteraction");
 
-                //viewInteraction = onView(createViewMatcher(context, identifier)).inRoot(withDecorView())
+                Field uiControllerFiled = classViewInteraction.getDeclaredField("uiController");
 
-                Class<?> WindowManagerGlobal = Class.forName("android.view.WindowManagerGlobal");
+                checkNotNull(classViewInteraction, "can not reflect field android.support.test.espresso.ViewInteraction.uiController");
 
-                LogUtil.d(TAG, "reflect class WindowManagerGlobal success");
+                uiControllerFiled.setAccessible(true);
 
-                Method getInstance = WindowManagerGlobal.getDeclaredMethod("getInstance");
+                ViewInteraction container = onView(createViewMatcher(context, identifier));
 
-                LogUtil.d(TAG, "reflect method WindowManagerGlobal  getInstance() success");
+                checkNotNull(container, "can not create instance of android.support.test.espresso.ViewInteraction");
 
-                getInstance.setAccessible(true);
+                uiController = (UiController) uiControllerFiled.get(container);
 
+                checkNotNull(uiController, "can't get instance of ui controller");
 
-                Object WindowManagerGlobalInstance = getInstance.invoke(WindowManagerGlobal);
-                LogUtil.d(TAG, "call method WindowManagerGlobal getInstance() success");
-
-
-                Field mRoots = WindowManagerGlobal.getDeclaredField("mRoots");
-                LogUtil.d(TAG, "reflect field mRoots success");
-
-                mRoots.setAccessible(true);
-
-                Object mRootsObject = mRoots.get(WindowManagerGlobalInstance);
-                LogUtil.d(TAG, "get field mRoots success");
-
-                ArrayList mRootsList = (ArrayList) mRootsObject;
-
-                LogUtil.d(TAG, "cast mRoots to list success, size : " + mRootsList.size());
-
-                Class<?> ViewRootImpl = Class.forName("android.view.ViewRootImpl");
-
-                LogUtil.d(TAG, "reflect class ViewRootImpl success ");
-
-                Field mViewField = ViewRootImpl.getDeclaredField("mView");
-
-                LogUtil.d(TAG, "reflect field mViewField success ");
-
-                mViewField.setAccessible(true);
-
-                View targetView = null;
-
-                for(Object o : mRootsList){
-                    View view = (View) mViewField.get(o);
-
-                    View child = view.findViewById(ResHelper.getIdResIDByName(context, identifier.getId()));
-
-                    if(child != null) {
-                        targetView = child;
-                        LogUtil.d(TAG, "find view with id name : " + identifier.getId());
-                    }
-
-                }
-
-                if(targetView != null){
-
-                    if(uiController == null){
-
-                        Class<?> ViewInteraction = Class.forName("android.support.test.espresso.ViewInteraction");
-
-                        LogUtil.d(TAG, "reflect class ViewInteraction success");
-
-                        Field uiControllerFiled = ViewInteraction.getDeclaredField("uiController");
-
-                        LogUtil.d(TAG, "reflect field uiController success");
-
-                        uiControllerFiled.setAccessible(true);
-
-                        ViewInteraction container = onView(createViewMatcher(context, identifier));
-                        LogUtil.d(TAG, "create ViewInteraction instance success");
-
-                        uiController = (UiController) uiControllerFiled.get(container);
-                        LogUtil.d(TAG, "get UiController instance success");
-                    }
-
-                    if(uiController == null){
-                        throw new IllegalArgumentException("can't get instance of ui controller");
-                    }
-
-                    final View finalTargetView = targetView;
-
-                    TestEntrance.getInstance().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            createViewAction((Action) atom).perform(uiController, finalTargetView);
-                        }
-                    });
-
-                    return true;
-
-                }
-
-            }else {
-
-                LogUtil.d(TAG, "view is activity.");
             }
 
-            if (viewInteraction == null) {
 
-                throw new IllegalArgumentException("with identifier :" + identifier.getJsonObject().toString() + " matches no view!");
-            }
-            testResult.writeActionInfo(TAG, "test view id : " + identifier.getId() + "; perform action : " + atom.getJsonObject().toString());
-            viewInteraction.perform(createViewAction((Action) atom));
+            ViewAction viewAction = createViewAction((Action) atom);
+
+            checkNotNull(viewAction, "un supported view action : " + atom.getJsonObject().toString());
+
+            TestEntrance.getInstance().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    createViewAction((Action) atom).perform(uiController, targetView);
+                }
+            });
+
             return true;
-        }
-        if (atom instanceof Assertion) {
-            ViewInteraction viewInteraction = onView(createViewMatcher(context, identifier));
-            if (viewInteraction == null) {
-                throw new IllegalArgumentException("with identifier :" + identifier.getJsonObject().toString() + " matches no view!");
-            }
+
+        } else if (atom instanceof Assertion) {
+
+            ViewAssertion assertion = createViewAssertion((Assertion) atom);
+
+            checkNotNull(assertion, "unsupported assertion : "+ atom.getJsonObject().toString());
+
+            assertion.check(targetView, null);
+
             testResult.writeActionInfo(TAG, "test view id : " + identifier.getId() + "; check assertion : " + atom.getJsonObject().toString());
-            viewInteraction.check(createViewAssertion((Assertion) atom));
+
             return true;
         }
+
         throw new IllegalArgumentException("testView id : " + identifier.getId() + " with unknown atom !");
     }
 

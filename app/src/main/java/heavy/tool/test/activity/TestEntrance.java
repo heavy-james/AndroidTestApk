@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import com.elvishew.xlog.LogLevel;
 
@@ -59,6 +60,10 @@ public class TestEntrance extends ActivityTestRule<Activity> {
         return instance;
     }
 
+    public Context getContext(){
+        return mContext;
+    }
+
     @BeforeClass
     public static void staticSetUp() throws Throwable {
         LogUtil.init(LogLevel.ALL, true, "/sdcard/xlog/heavy.tool.test/test_result.txt");
@@ -80,9 +85,10 @@ public class TestEntrance extends ActivityTestRule<Activity> {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable throwable) {
-                LogUtil.d(TAG, "runTests occurs unexpected exception, do aborting...");
-                LogUtil.e(TAG, throwable.getMessage());
-                final TestCommand responseCommand = new RecordResult().setInfo("execute command failed, cause : " + throwable.getMessage())
+                LogUtil.d(TAG, "runTests occurs unexpected exception, aborting...");
+                String exceptionAsString = Log.getStackTraceString(throwable);
+                LogUtil.e(TAG, exceptionAsString);
+                final TestCommand responseCommand = new RecordResult().setInfo("execute command failed : " + exceptionAsString)
                         .setFailed(true).setLevel(RecordResult.LEVEL_DETAIL).setRunAsCondition(false);
                 new Thread(new Runnable() {
                     @Override

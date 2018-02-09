@@ -12,7 +12,16 @@ import android.support.test.espresso.matcher.BoundedMatcher;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Checkable;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 import heavy.test.plugin.model.data.Action;
 import heavy.test.plugin.model.data.Assertion;
@@ -27,16 +36,9 @@ import heavy.test.plugin.model.data.assertion.view.FullScreen;
 import heavy.test.plugin.model.data.assertion.view.HasFocus;
 import heavy.test.plugin.model.data.assertion.view.WithText;
 import heavy.test.plugin.model.data.interf.ITestObject;
-import heavy.test.plugin.util.LogUtil;
 import heavy.tool.test.test.model.TestResult;
+import heavy.tool.test.util.LogUtil;
 import heavy.tool.test.util.ResHelper;
-
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-
-import java.util.ArrayList;
-import java.util.List;
-
 
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.pressKey;
@@ -61,6 +63,10 @@ import static org.hamcrest.core.Is.isA;
 public class ViewTestUtil {
 
     public static final String TAG = "ViewTestUtil";
+
+    static ArrayList mRoots;
+
+    static Field mViewField;
 
     public static ViewAction setChecked(final boolean checked) {
         LogUtil.d(TAG, "setChecked : " + checked);
@@ -283,5 +289,65 @@ public class ViewTestUtil {
             return true;
         }
         return false;
+    }
+
+    //todo you can not specify the root now, which may contains same view matches your condition but not really the one you want.
+    public static View getViewFromDevice(Matcher<View> viewMatcher) throws Throwable {
+
+
+        LogUtil.d(TAG, "getViewFromDevice matcher : " + viewMatcher.toString());
+
+        if (mRoots == null) {
+            Class<?> classWindowManagerGlobal = Class.forName("android.view.WindowManagerGlobal");
+
+            Method methodGetInstance = classWindowManagerGlobal.getDeclaredMethod("getInstance");
+            methodGetInstance.setAccessible(true);
+            Object windowManagerGlobalInstance = methodGetInstance.invoke(classWindowManagerGlobal);
+
+            Field filedRoots = classWindowManagerGlobal.getDeclaredField("mRoots");
+            filedRoots.setAccessible(true);
+            Object mRootsObject = filedRoots.get(windowManagerGlobalInstance);
+
+            mRoots = (ArrayList) mRootsObject;
+        }
+
+        if (mViewField == null) {
+            Class<?> ViewRootImpl = Class.forName("android.view.ViewRootImpl");
+            mViewField = ViewRootImpl.getDeclaredField("mView");
+            mViewField.setAccessible(true);
+        }
+
+        for (Object o : mRoots) {
+
+            View view = (View) mViewField.get(o);
+
+            View result = searchViewRecursively(view, viewMatcher);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private static View searchViewRecursively(View root, Matcher<View> viewMatcher) {
+
+        if (root == null) {
+            return null;
+        }
+
+        if (viewMatcher.matches(root)) {
+            return root;
+        }
+
+        if (root instanceof ViewGroup) {
+            ViewGroup viewGroup = (ViewGroup) root;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                View result = searchViewRecursively(viewGroup.getChildAt(i), viewMatcher);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
     }
 }
