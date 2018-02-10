@@ -9,7 +9,7 @@ import android.view.MotionEvent;
  * Created by heavy on 2018/2/8.
  */
 
-public class MyUIController implements UiController{
+public class MyUIController implements UiController {
 
     @Override
     public boolean injectMotionEvent(MotionEvent event) throws InjectEventSecurityException {

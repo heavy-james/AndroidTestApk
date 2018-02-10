@@ -17,13 +17,11 @@ import java.text.SimpleDateFormat;
 public class LogUtil {
 
 
+    private static final String LOG_TAG = "TBRunner";
+    private static final int DEFAULT_LOG_FILE_SIZE = 10 * 1024 * 1024;
+    private static final int DEFAULT_LOG_FILE_NUMBER = 5;
     private static int mLogLevel;
     private static String mSavePath;
-    private static final String LOG_TAG = "TBRunner";
-
-    private static final int DEFAULT_LOG_FILE_SIZE = 10 * 1024 * 1024;
-
-    private static final int DEFAULT_LOG_FILE_NUMBER = 5;
 
     public static void init(int logLevel, String savePath) {
         mLogLevel = logLevel;
@@ -138,7 +136,7 @@ public class LogUtil {
                         }
 
                         //for some time the file name generator does't give an new file name, bak up here.
-                        if(file.length() > DEFAULT_LOG_FILE_SIZE){
+                        if (file.length() > DEFAULT_LOG_FILE_SIZE) {
                             return true;
                         }
                         return false;

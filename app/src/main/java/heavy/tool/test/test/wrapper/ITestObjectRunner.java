@@ -2,7 +2,7 @@ package heavy.tool.test.test.wrapper;
 
 import android.content.Context;
 
-import heavy.tool.test.test.model.TestResult;
+import heavy.test.plugin.model.data.TestObject;
 
 
 /**
@@ -11,5 +11,5 @@ import heavy.tool.test.test.model.TestResult;
 
 public interface ITestObjectRunner {
 
-    public boolean runTest(Context context, TestResult result) throws Throwable;
+    public TestObject runTest(Context context) throws Throwable;
 }

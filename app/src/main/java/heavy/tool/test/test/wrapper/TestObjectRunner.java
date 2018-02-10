@@ -3,9 +3,13 @@ package heavy.tool.test.test.wrapper;
 import android.content.Context;
 
 import heavy.test.plugin.model.data.Action;
+import heavy.test.plugin.model.data.TestObject;
 import heavy.test.plugin.model.data.Testable;
-import heavy.test.plugin.model.data.interf.ITestObject;
-import heavy.tool.test.test.model.TestResult;
+import heavy.test.plugin.model.data.result.RecordResult;
+import heavy.test.plugin.model.data.testable.global.GetRuntimeValue;
+import heavy.test.plugin.model.data.testable.global.SetUpActivity;
+import heavy.test.plugin.model.data.testable.global.StopTest;
+import heavy.tool.test.activity.TestEntrance;
 
 
 /**
@@ -15,25 +19,42 @@ import heavy.tool.test.test.model.TestResult;
 public class TestObjectRunner implements ITestObjectRunner {
 
     private static final String TAG = "TestObjectRunner";
-    private ITestObject mTestObject;
+    private TestObject mTestObject;
 
-    public TestObjectRunner(ITestObject testObject) {
+    public TestObjectRunner(TestObject testObject) {
         this.mTestObject = testObject;
     }
 
     @Override
-    public boolean runTest(Context context, TestResult testResult) throws Throwable {
+    public TestObject runTest(Context context) throws Throwable {
 
         if (mTestObject == null) {
-            return true;
+            return null;
+        }
+
+        if (mTestObject instanceof SetUpActivity) {
+            SetUpActivity setUpActivity = (SetUpActivity) mTestObject;
+            TestEntrance.getInstance().setUpActivity(setUpActivity.getIntentData());
+            return new RecordResult().setInfo("set up activity : " + setUpActivity.getIntentData().getClassName())
+                    .setLevel(RecordResult.LEVEL_PAGE);
+        }
+
+        if (mTestObject instanceof GetRuntimeValue) {
+            GetRuntimeValue getRuntimeValueCmd = (GetRuntimeValue) mTestObject;
+            TestEntrance.getInstance().resolveRuntimeValue(getRuntimeValueCmd.getRuntimeValue());
+            return getRuntimeValueCmd;
+        }
+
+        if (mTestObject instanceof StopTest) {
+            return mTestObject;
         }
 
         if (mTestObject instanceof Testable) {
-            return new TestableRunner((Testable) mTestObject).runTest(context, testResult);
+            return new TestableRunner((Testable) mTestObject).runTest(context);
         }
 
         if (mTestObject instanceof Action) {
-            return new TestActionRunner((Action) mTestObject).runTest(context, testResult);
+            return new TestActionRunner((Action) mTestObject).runTest(context);
         }
 
         throw new IllegalArgumentException("unknown test object type : " + mTestObject);

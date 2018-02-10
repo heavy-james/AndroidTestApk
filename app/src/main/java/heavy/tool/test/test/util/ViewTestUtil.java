@@ -26,6 +26,7 @@ import java.util.List;
 import heavy.test.plugin.model.data.Action;
 import heavy.test.plugin.model.data.Assertion;
 import heavy.test.plugin.model.data.Identifier;
+import heavy.test.plugin.model.data.TestObject;
 import heavy.test.plugin.model.data.action.view.Check;
 import heavy.test.plugin.model.data.action.view.Click;
 import heavy.test.plugin.model.data.action.view.Focus;
@@ -35,8 +36,7 @@ import heavy.test.plugin.model.data.assertion.view.Display;
 import heavy.test.plugin.model.data.assertion.view.FullScreen;
 import heavy.test.plugin.model.data.assertion.view.HasFocus;
 import heavy.test.plugin.model.data.assertion.view.WithText;
-import heavy.test.plugin.model.data.interf.ITestObject;
-import heavy.tool.test.test.model.TestResult;
+import heavy.test.plugin.model.data.result.RecordResult;
 import heavy.tool.test.util.LogUtil;
 import heavy.tool.test.util.ResHelper;
 
@@ -204,7 +204,7 @@ public class ViewTestUtil {
     }
 
     public static ViewAction createViewAction(Action atom) {
-        LogUtil.i(TAG, "createViewAction : " + atom.getJsonObject().toString());
+        LogUtil.i(TAG, "createViewAction : " + atom);
         if (atom instanceof Check) {
             return ViewTestUtil.setChecked(Boolean.valueOf(atom.getDescription()));
         }
@@ -230,7 +230,7 @@ public class ViewTestUtil {
     public static ViewAssertion createViewAssertion(Assertion assertion) throws Throwable {
         Matcher matcher = createViewMatcher(assertion);
         if (null != matcher) {
-            LogUtil.i(TAG, "createViewAssertion assertion : " + assertion + "; data : " + assertion.getJsonObject().toString());
+            LogUtil.i(TAG, "createViewAssertion assertion : " + assertion + "; data : " + assertion.toString());
             return matches(createViewMatcher(assertion));
         }
         return null;
@@ -262,7 +262,7 @@ public class ViewTestUtil {
             //todo
         }
 
-        throw new IllegalArgumentException("unknown assertion type, data : " + assertion.getJsonObject().toString());
+        throw new IllegalArgumentException("unknown assertion type, data : " + assertion.toString());
     }
 
     public static ViewAction createRecyclerViewAction(int position, Action action) throws Throwable {
@@ -275,7 +275,7 @@ public class ViewTestUtil {
         return matches(allOf(ViewTestUtil.recyclerChildAtPosition(position), createViewMatcher(assertion)));
     }
 
-    public static boolean sendActivityKeyEvent(ITestObject atom, TestResult testResult) {
+    public static TestObject sendActivityKeyEvent(TestObject atom) {
         int keyCode = -1;
         if (atom instanceof KeyPress) {
             keyCode = ((KeyPress) atom).getKeyCode();
@@ -284,11 +284,11 @@ public class ViewTestUtil {
             keyCode = ((KeyEvent) atom).getKeyCode();
         }
         if (keyCode > 0) {
-            testResult.writeTestableInfo(TAG, "sendActivityKeyEvent keyCode : " + keyCode);
+            LogUtil.d(TAG, "sendActivityKeyEvent keyCode : " + keyCode);
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(keyCode);
-            return true;
+            return new RecordResult().setInfo("sendActivityKeyEvent keyCode : " + keyCode);
         }
-        return false;
+        return null;
     }
 
     //todo you can not specify the root now, which may contains same view matches your condition but not really the one you want.

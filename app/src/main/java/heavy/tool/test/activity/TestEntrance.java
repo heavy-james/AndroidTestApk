@@ -20,31 +20,27 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import heavy.test.plugin.logic.TestCommand;
-import heavy.test.plugin.logic.TestCommandFactory;
-import heavy.test.plugin.logic.command.GetRuntimeValue;
-import heavy.test.plugin.logic.command.RecordResult;
-import heavy.test.plugin.logic.command.RunTestObject;
-import heavy.test.plugin.logic.command.SetUpActivity;
-import heavy.test.plugin.logic.command.StopTest;
 import heavy.test.plugin.logic.transport.SocketClient;
 import heavy.test.plugin.model.data.IntentData;
+import heavy.test.plugin.model.data.TestObject;
+import heavy.test.plugin.model.data.factory.TestObjectFactory;
 import heavy.test.plugin.model.data.reflection.MethodData;
 import heavy.test.plugin.model.data.reflection.ObjectData;
 import heavy.test.plugin.model.data.reflection.RuntimeValue;
-import heavy.test.plugin.util.LogUtil;
-import heavy.test.plugin.util.TextUtil;
-import heavy.tool.test.test.model.TestResult;
+import heavy.test.plugin.model.data.result.RecordResult;
+import heavy.test.plugin.model.data.testable.global.StopTest;
 import heavy.tool.test.test.util.ReflectionUtil;
 import heavy.tool.test.test.wrapper.IntentWrapper;
 import heavy.tool.test.test.wrapper.TestObjectRunner;
+import heavy.tool.test.util.LogUtil;
+
+import static android.support.test.espresso.core.deps.guava.base.Preconditions.checkNotNull;
 
 
 @RunWith(AndroidJUnit4.class)
 public class TestEntrance extends ActivityTestRule<Activity> {
 
     public static final String TAG = "TestEntrance";
-    static TestResult mTestResult;
     static TestEntrance instance = null;
     static boolean testRunning = true;
     static private Context mContext;
@@ -60,16 +56,11 @@ public class TestEntrance extends ActivityTestRule<Activity> {
         return instance;
     }
 
-    public Context getContext(){
-        return mContext;
-    }
-
     @BeforeClass
     public static void staticSetUp() throws Throwable {
-        LogUtil.init(LogLevel.ALL, true, "/sdcard/xlog/heavy.tool.test/test_result.txt");
+        heavy.test.plugin.util.LogUtil.init(LogLevel.ALL, true, "/sdcard/xlog/heavy.tool.test/test_result.txt");
         LogUtil.i(TAG, "staticSetUp");
         mContext = InstrumentationRegistry.getTargetContext();
-        mTestResult = new TestResult();
     }
 
     @AfterClass
@@ -77,24 +68,29 @@ public class TestEntrance extends ActivityTestRule<Activity> {
 
     }
 
-    @Test
-    public void runTests() throws Throwable {
-        LogUtil.d(TAG, "runTests start test server...");
-        TestCommand command = null;
+    public Context getContext() {
+        return mContext;
+    }
 
+    @Test
+    public void runTests() {
+        LogUtil.d(TAG, "runTests start test server...");
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable throwable) {
                 LogUtil.d(TAG, "runTests occurs unexpected exception, aborting...");
+                testRunning = false;
                 String exceptionAsString = Log.getStackTraceString(throwable);
                 LogUtil.e(TAG, exceptionAsString);
-                final TestCommand responseCommand = new RecordResult().setInfo("execute command failed : " + exceptionAsString)
-                        .setFailed(true).setLevel(RecordResult.LEVEL_DETAIL).setRunAsCondition(false);
+                final RecordResult recordResult = new RecordResult();
+                recordResult.setInfo("execute command failed : " + exceptionAsString);
+                recordResult.setFailed(true);
+                recordResult.setLevel(RecordResult.LEVEL_DETAIL);
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            sendForResult(responseCommand);
+                            sendResult(recordResult);
                         } catch (Throwable throwable1) {
                             throwable1.printStackTrace();
                         }
@@ -106,31 +102,57 @@ public class TestEntrance extends ActivityTestRule<Activity> {
             }
         });
 
-        while (testRunning) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(10001, 10);
+            LogUtil.d(TAG, "runTests start create server socket success");
+            Socket socket = serverSocket.accept();
+            LogUtil.d(TAG, "runTests start accept socket : " + socket);
+            mSocketClient = new SocketClient(socket);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        while (testRunning && !mSocketClient.isClosed()) {
             try {
-                if (mSocketClient == null) {
-                    ServerSocket serverSocket = new ServerSocket(10001, 10);
-                    LogUtil.d(TAG, "runTests start create server socket success");
-                    Socket socket = serverSocket.accept();
-                    LogUtil.d(TAG, "runTests start accept socket : " + socket);
-                    mSocketClient = new SocketClient(socket);
-                }
-                LogUtil.d(TAG, "runTests start read socket input with client");
+
                 String commandStr = mSocketClient.readLine();
-                LogUtil.d(TAG, "get string : " + commandStr);
-                if (!TextUtil.isEmpty(commandStr)) {
-                    command = TestCommandFactory.createCommand(new JSONObject(commandStr));
-                    execute(command);
+
+                LogUtil.d(TAG, "runTests get string : " + commandStr);
+
+                checkNotNull(commandStr, "get null string from test client command");
+
+                TestObject command = TestObjectFactory.createTestObject(new JSONObject(commandStr));
+
+                checkNotNull(command, "can not create test object for command : " + commandStr);
+
+                TestObject testResult = new TestObjectRunner(command).runTest(mContext);
+
+                checkNotNull(testResult, "no test result for command : " + commandStr);
+
+                sendResult(testResult);
+
+                if (testResult instanceof StopTest) {
+                    stopTest();
                 }
-                testRunning = false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw e;
+
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+                RecordResult recordResult = new RecordResult().setInfo(Log.getStackTraceString(throwable));
+                recordResult.setFailed(true);
+                try {
+                    sendResult(recordResult);
+                    //wait 3 seconds for client to capture screen and collect log.
+                    Thread.sleep(3000);
+                } catch (Throwable throwable1) {
+                    throwable1.printStackTrace();
+                } finally {
+                    stopTest();
+                }
             }
         }
     }
 
-    private void setUpActivity(IntentData intentData) {
+    public void setUpActivity(IntentData intentData) {
         if (mActivity == null) {
             Intent intent = new IntentWrapper(intentData).buildIntent();
             LogUtil.i(TAG, "setUp intent-->" + intent);
@@ -141,73 +163,10 @@ public class TestEntrance extends ActivityTestRule<Activity> {
         }
     }
 
-    private void sendForResult(TestCommand testCommand) throws Throwable {
-        if (testCommand != null) {
-            mTestResult.writeResult(TAG, testCommand.getJsonObject().toString());
-            mSocketClient.println(testCommand.getJsonObject().toString());
-            LogUtil.d(TAG, "device sendForResult command String : " + testCommand.getJsonObject().toString());
-            String resultString = mSocketClient.readLine();
-            LogUtil.d(TAG, "device sendForResult getResponse String : " + resultString);
-            if (!TextUtil.isEmpty(resultString)) {
-                TestCommand resultCommand = TestCommandFactory.createCommand(new JSONObject(resultString));
-                LogUtil.d(TAG, "device sendForResult getResponse to Command : " + resultCommand.getJsonObject().toString());
-                execute(resultCommand);
-            }
-        }
+    private void sendResult(TestObject testObject) throws Throwable {
+        LogUtil.d(TAG, "device sendResult command String : " + testObject.getJsonObject().toString());
+        mSocketClient.println(testObject.getJsonObject().toString());
     }
-
-    private void execute(TestCommand testCommand) throws Throwable {
-        if (testCommand == null) {
-            return;
-        }
-        TestCommand responseCommand = null;
-        do {
-            try {
-                if (testCommand instanceof SetUpActivity) {
-                    SetUpActivity setUpActivity = (SetUpActivity) testCommand;
-                    setUpActivity(setUpActivity.getIntentData());
-                    responseCommand = new RecordResult().setInfo("set up activity : " + setUpActivity.getIntentData().getClassName())
-                            .setLevel(RecordResult.LEVEL_PAGE);
-                    break;
-                }
-
-                if (testCommand instanceof RunTestObject) {
-                    RunTestObject runTestObject = (RunTestObject) testCommand;
-                    new TestObjectRunner(runTestObject.getTestObject()).runTest(mContext, mTestResult);
-                    responseCommand = new RecordResult().setInfo("execute object : " + runTestObject.getJsonObject().toString())
-                            .setLevel(RecordResult.LEVEL_TESTABLE);
-                    break;
-                }
-
-                if (testCommand instanceof GetRuntimeValue) {
-                    GetRuntimeValue getRuntimeValueCmd = (GetRuntimeValue) testCommand;
-                    resolveRuntimeValue(getRuntimeValueCmd.getRuntimeValue());
-                    responseCommand = getRuntimeValueCmd;
-                    break;
-                }
-
-                if (testCommand instanceof StopTest) {
-                    mSocketClient.close();
-                    testRunning = false;
-                    responseCommand = new RecordResult().setInfo("stopped test by test client .").setLevel(RecordResult.LEVEL_TESTABLE);
-                    break;
-                }
-            } catch (Throwable throwable) {
-                responseCommand = new RecordResult().setInfo("execute command failed, cause : " + throwable.getMessage())
-                        .setFailed(true).setLevel(RecordResult.LEVEL_DETAIL).setRunAsCondition(testCommand.isRunAsCondition());
-                if (!testCommand.isRunAsCondition()) {
-                    sendForResult(responseCommand);
-                    mSocketClient.close();
-                    throw throwable;
-                }
-            }
-        } while (false);
-        if (responseCommand != null) {
-            responseCommand.setRunAsCondition(testCommand.isRunAsCondition());
-        }
-        sendForResult(responseCommand);
-    }
-
 
     public Object getGlobalField(ObjectData objectData) throws Throwable {
         return ReflectionUtil.getObjectFromData(mActivity, objectData);
@@ -225,6 +184,11 @@ public class TestEntrance extends ActivityTestRule<Activity> {
                 runtimeValue.setValue(getGlobalField(runtimeValue.getObjectData()));
             }
         }
+    }
+
+    public void stopTest() {
+        testRunning = false;
+        mSocketClient.close();
     }
 
 }

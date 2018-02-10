@@ -2,11 +2,8 @@ package heavy.tool.test.test.wrapper;
 
 import android.content.Context;
 
-
 import heavy.test.plugin.model.data.Action;
-import heavy.test.plugin.model.data.action.view.KeyEvent;
-import heavy.test.plugin.model.data.action.view.KeyPress;
-import heavy.tool.test.test.model.TestResult;
+import heavy.test.plugin.model.data.TestObject;
 import heavy.tool.test.test.util.ViewTestUtil;
 
 
@@ -23,11 +20,15 @@ public class TestActionRunner implements ITestObjectRunner {
     }
 
     @Override
-    public boolean runTest(Context context, TestResult result) throws Throwable {
+    public TestObject runTest(Context context) throws Throwable {
 
-        if (mAction instanceof KeyEvent || mAction instanceof KeyPress) {
-            return ViewTestUtil.sendActivityKeyEvent(mAction, result);
+
+        TestObject testObject = ViewTestUtil.sendActivityKeyEvent(mAction);
+
+        if (testObject != null) {
+            return testObject;
         }
-        return true;
+
+        return null;
     }
 }
