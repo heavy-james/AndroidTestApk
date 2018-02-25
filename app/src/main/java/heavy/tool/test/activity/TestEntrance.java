@@ -33,6 +33,7 @@ import heavy.tool.test.test.util.ReflectionUtil;
 import heavy.tool.test.test.wrapper.IntentWrapper;
 import heavy.tool.test.test.wrapper.TestObjectRunner;
 import heavy.tool.test.util.LogUtil;
+import heavy.tool.test.util.SystemUtil;
 
 import static android.support.test.espresso.core.deps.guava.base.Preconditions.checkNotNull;
 
@@ -161,6 +162,11 @@ public class TestEntrance extends ActivityTestRule<Activity> {
                 LogUtil.i(TAG, "setUp mAtivity-->" + mActivity);
             }
         }
+    }
+
+    @Override
+    public Activity getActivity() {
+        return mActivity;
     }
 
     private void sendResult(TestObject testObject) throws Throwable {

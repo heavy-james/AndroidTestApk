@@ -32,16 +32,20 @@ import heavy.test.plugin.model.data.action.view.Click;
 import heavy.test.plugin.model.data.action.view.Focus;
 import heavy.test.plugin.model.data.action.view.KeyEvent;
 import heavy.test.plugin.model.data.action.view.KeyPress;
+import heavy.test.plugin.model.data.action.view.SetText;
+import heavy.test.plugin.model.data.action.view.TypeText;
 import heavy.test.plugin.model.data.assertion.view.Display;
 import heavy.test.plugin.model.data.assertion.view.FullScreen;
 import heavy.test.plugin.model.data.assertion.view.HasFocus;
 import heavy.test.plugin.model.data.assertion.view.WithText;
 import heavy.test.plugin.model.data.result.RecordResult;
+import heavy.tool.test.test.model.action.TypeTextAction;
 import heavy.tool.test.util.LogUtil;
 import heavy.tool.test.util.ResHelper;
 
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.pressKey;
+import static android.support.test.espresso.action.ViewActions.replaceText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.hasFocus;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -224,6 +228,17 @@ public class ViewTestUtil {
             KeyPress press = (KeyPress) atom;
             return pressKey(press.getKeyCode());
         }
+
+        if (atom instanceof SetText) {
+            SetText setText = (SetText) atom;
+            return replaceText(setText.getContent());
+        }
+
+        if (atom instanceof TypeText) {
+            TypeText setText = (TypeText) atom;
+            return new TypeTextAction(setText.getContent());
+        }
+
         return null;
     }
 
